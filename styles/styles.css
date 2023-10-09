@@ -5,8 +5,8 @@ body {
 
 .container {
     position: absolute;
-    transform: translate(-50%, -50%);
-    top: 50%;
+    transform: translate(-50%, 30%);
+    top: 0%;
     left: 50%;
     display: block;
     width: 400px;
@@ -81,4 +81,21 @@ body {
     font-size: 45px;
     font-weight: bold;
     cursor: pointer;
+}
+
+#turn-info-field {
+    position: absolute;
+    top: -20px;
+    /* left: 20px; */
+    /* left: 320px; */
+    /* color: blue; */
+    /* color: red; */
+}
+
+.damage-field {
+    text-align: center;
+    padding: 10px 10px 0 0;
+    font-size: 30px;
+    font-weight: bold;
+    color: red;
 }
