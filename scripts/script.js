@@ -41,48 +41,50 @@ allUnits.forEach(unit => {
 let unitFirst = null;
 let unitSecond = null;
 let turnCounter = 0;
+let noActivity = false;
+let unitHeroAlive = 3;
+let unitEnemyAlive = 3;
 
 function handleUnitClicker(event) {
 
-    // const index = event.target.dataset.count;
-    
     if (unitFirst === null && 
         unitSecond === null &&
-        !event.target.classList.contains('inactive')) {
+        !event.target.classList.contains('inactive') &&
+        !event.target.classList.contains('dead')) {
 
-        unitFirst = event.target;
-        unitFirst.classList.remove('active');
-        unitFirst.classList.add('selected');
-        // console.log(unitBase[index]);
+            unitFirst = event.target;
+            unitFirst.classList.remove('active');
+            unitFirst.classList.add('selected');
 
     } else if (unitFirst !== null && 
         unitSecond === null && 
-        unitFirst.classList[1] != event.target.classList[1]) {
+        unitFirst.classList[1] != event.target.classList[1] &&
+        !event.target.classList.contains('dead')) {
 
-        unitSecond = event.target;
-        unitSecond.classList.remove('active');
-        unitSecond.classList.add('selected');
-        // console.log(unitBase[index]);
+            unitSecond = event.target;
+            unitSecond.classList.remove('active');
+            unitSecond.classList.add('selected');
 
-        battle(unitFirst, unitSecond);
+            battle(unitFirst, unitSecond);
 
-        unitFirst = null;
-        unitSecond = null;
+            unitFirst = null;
+            unitSecond = null;
 
     } else if (unitFirst == event.target &&
         !event.target.classList.contains('inactive')) {
 
-        unitFirst.classList.remove('selected');
-        unitFirst.classList.add('active');
-        unitFirst = null;
+            unitFirst.classList.remove('selected');
+            unitFirst.classList.add('active');
+            unitFirst = null;
 
-    } else if (!event.target.classList.contains('inactive')) {
+    } else if (!event.target.classList.contains('inactive') &&
+        !event.target.classList.contains('dead')) {
 
-        unitFirst.classList.remove('selected');
-        unitFirst.classList.add('active');
-        unitFirst = event.target;
-        unitFirst.classList.remove('active');
-        unitFirst.classList.add('selected');
+            unitFirst.classList.remove('selected');
+            unitFirst.classList.add('active');
+            unitFirst = event.target;
+            unitFirst.classList.remove('active');
+            unitFirst.classList.add('selected');
 
     }
 }
@@ -90,23 +92,112 @@ function handleUnitClicker(event) {
 function battle(u1, u2) {
     setTimeout( function() {
         calculateDamage(u1, u2);
+
         u1.classList.remove('selected');
         u1.classList.add('inactive');
-
-        unitBase[u1.dataset.count].active = false;
-
         u2.classList.remove('selected');
-        u2.classList.add('active');
-    }, 500);
-    
-}
+        if (!u2.classList.contains('inactive') && !u2.classList.contains('dead')) {
+            u2.classList.add('active');
+        }
 
+        checkNextPhase();
+    }, 500);
+
+    unitBase[u1.dataset.count].active = false;
+}
 
 function calculateDamage(u1, u2) {
-    const damage = unitBase[u1.dataset.count].damage;
+    const damage = cheatOn ? 100 : unitBase[u1.dataset.count].damage;
     const hp = unitBase[u2.dataset.count].hp;
     const name = unitBase[u2.dataset.count].name;
-    const currentHp = hp - damage;
+    let currentHp = hp - damage;
+    if (currentHp <= 0) {currentHp = 0;}
+
     unitBase[u2.dataset.count].hp = currentHp;
     u2.innerHTML = `${name} ${currentHp}`;
+
+    checkDeath(u2);
+
 }
+
+function checkNextPhase() {
+    const aAL = checkActiveUnits();
+    noActivity = aAL == 0 ? true : false;
+   
+    if (noActivity) {
+        allUnits.forEach(unit => {
+            if (!unit.classList.contains('dead')) {
+                unitBase[unit.dataset.count].active = true;
+                unit.classList.remove('inactive')
+                unit.classList.add('active');
+            }
+        });
+        noActivity = false;
+    }
+}
+
+function checkDeath(u2) {
+    if (unitBase[u2.dataset.count].hp == 0) {
+        const unitType = u2.classList[1];
+        if (unitType == 'hero') {
+            unitHeroAlive--;
+        } else {
+            unitEnemyAlive--;
+        }
+        u2.className = `unit ${unitType} dead`;
+    }
+    gameOverPanel();
+}
+
+function checkActiveUnits() {
+    return document.querySelectorAll('.active').length;
+}
+
+function gameOverPanel() {
+    if (unitHeroAlive == 0) {
+        winPose('Enemy wins!');
+    } else if (unitEnemyAlive == 0) {
+        winPose('Hero wins!');
+    }
+}
+
+function winPose(text) {
+    infoField.style.display = 'flex';
+    infoField.innerHTML = text;
+    allUnits.forEach(unit => {
+        if (!unit.classList.contains('dead')) {
+            unit.classList.add('winner');
+        }
+    });
+}
+
+// cheat button ----------------------------
+
+const cheatButton = document.createElement('button');
+cheatButton.textContent = 'One Punch Mode Off';
+cheatButton.id = 'cheat-btn';
+cheatButton.className = 'cheat-btn-off';
+let cheatOn = false;
+cheatButton.addEventListener('click', ()=> {
+    if (!cheatOn) {
+        cheatOn = true;
+        cheatButton.className = 'cheat-btn-on';
+        cheatButton.textContent = 'One Punch Mode On';
+    } else {
+        cheatOn = false;
+        cheatButton.className = 'cheat-btn-off';
+        cheatButton.textContent = 'One Punch Mode Off';
+    }
+})
+document.body.appendChild(cheatButton);
+
+// information block -------------------------------------------
+
+const infoField = document.createElement('div');
+infoField.addEventListener('click', ()=> {
+    location.reload();
+});
+infoField.id = 'info-field';
+infoField.style.display = 'none';
+infoField.innerHTML = 'Lorem Ipsum';
+gameBoard.appendChild(infoField);
